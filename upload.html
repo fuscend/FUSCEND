@@ -1,156 +1,100 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Subir Funk - FUSCEND</title>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-storage.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js"></script>
   <style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #121212;
-      color: #f1f1f1;
-    }
-
-    header.nav {
-      background: linear-gradient(to right, #000, #222);
-      padding: 15px 30px;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    }
-
-    header.nav h2 {
-      margin: 0;
-    }
-
-    header.nav nav a {
-      color: white;
-      margin-left: 20px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    header.nav nav a:hover {
-      color: #ffce00;
-    }
-
-    main {
-      padding: 30px 20px;
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 40px;
       text-align: center;
     }
-
-    h1 {
-      color: #ffce00;
-      font-size: 2rem;
-    }
-
-    form {
-      margin-top: 20px;
-      background-color: #1e1e1e;
-      padding: 20px;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-
-    input[type="text"],
-    input[type="file"] {
-      width: 100%;
+    input, label, button {
+      display: block;
+      margin: 10px auto;
       padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 6px;
-      background: #2e2e2e;
+      font-size: 16px;
+      background: #222;
       color: white;
+      border: 1px solid #444;
+      border-radius: 5px;
     }
-
     button {
-      padding: 10px 20px;
-      background-color: #4caf50;
-      border: none;
-      color: white;
-      border-radius: 6px;
-      font-weight: bold;
       cursor: pointer;
     }
-
-    button:hover {
-      background-color: #3b9441;
-    }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-storage.js"></script>
 </head>
 <body>
-  <header class="nav">
-    <h2>FUSCEND</h2>
-    <nav>
-      <a href="index.html">🎧 Escuchar Funk</a>
-      <a href="upload.html">📤 Subir Música</a>
-      <a href="biblioteca.html">🎵 Mi Biblioteca</a>
-    </nav>
-  </header>
+  <h1>📤 Subir un Funk</h1>
 
-  <main>
-    <h1>📤 Subir Funk</h1>
-    <form id="uploadForm">
-      <input type="text" id="name" placeholder="Nombre del funk" required><br>
-      <input type="text" id="author" placeholder="Autor" required><br>
-      <input type="file" id="file" accept="audio/*" required><br>
-      <button type="submit">Subir</button>
-    </form>
-  </main>
+  <label for="name">🎵 Nombre del Funk</label>
+  <input type="text" id="name" placeholder="Ej: Montagem Estelar">
+
+  <label for="author">🧑 Autor</label>
+  <input type="text" id="author" placeholder="Ej: sekimane">
+
+  <label for="file">📁 Archivo de audio (.mp3)</label>
+  <input type="file" id="file">
+
+  <button onclick="subirFunk()">Subir Funk</button>
+
+  <p id="estado"></p>
 
   <script>
+    // 🔧 CONFIGURA TU FIREBASE AQUÍ
     const firebaseConfig = {
       apiKey: "TU_API_KEY",
       authDomain: "TU_DOMINIO.firebaseapp.com",
       projectId: "TU_PROJECT_ID",
-      storageBucket: "TU_BUCKET.appspot.com"
+      storageBucket: "TU_BUCKET.appspot.com",
+      messagingSenderId: "XXXXXXXX",
+      appId: "APP_ID"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const storage = firebase.storage();
-    const auth = firebase.auth();
 
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const file = document.getElementById('file').files[0];
-      const name = document.getElementById('name').value;
-      const author = document.getElementById('author').value;
+    function subirFunk() {
+      const name = document.getElementById("name").value.trim();
+      const author = document.getElementById("author").value.trim();
+      const file = document.getElementById("file").files[0];
+      const estado = document.getElementById("estado");
 
-      const user = auth.currentUser;
-      if (!user) {
-        alert("Debes estar registrado para subir música.");
+      if (!name || !author || !file) {
+        estado.textContent = "Completa todos los campos.";
         return;
       }
 
-      const storageRef = storage.ref().child(`funks/${Date.now()}-${file.name}`);
-      await storageRef.put(file);
-      const url = await storageRef.getDownloadURL();
+      const ref = storage.ref("funks/" + Date.now() + "_" + file.name);
+      estado.textContent = "Subiendo...";
 
-      await db.collection("funks").add({
-        name,
-        author,
-        url,
-        uploaded: Date.now(),
-        userId: user.uid,
-        plays: 0
+      ref.put(file).then(snapshot => {
+        return snapshot.ref.getDownloadURL();
+      }).then(url => {
+        return db.collection("funks").add({
+          name,
+          author,
+          url,
+          uploaded: new Date(),
+          plays: 0
+        });
+      }).then(() => {
+        estado.textContent = "✅ Funk subido con éxito!";
+        document.getElementById("name").value = "";
+        document.getElementById("author").value = "";
+        document.getElementById("file").value = "";
+      }).catch(err => {
+        estado.textContent = "❌ Error: " + err.message;
       });
-
-      alert("Funk subido correctamente.");
-    });
+    }
   </script>
 </body>
 </html>
-
-
-
