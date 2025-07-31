@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro - FUSCEND</title>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+    form {
+      max-width: 400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📝 Crear cuenta en FUSCEND</h1>
+  <form id="registerForm">
+    <label>Name:</label>
+    <input type="text" id="username" required>
+
+    <label>Contraseña:</label>
+    <input type="password" id="password" required>
+
+    <button type="submit">✅ Todo listo para registrarte</button>
+  </form>
+  <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_DOMINIO.firebaseapp.com",
+      projectId: "TU_PROJECT_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const fakeEmail = username + "@fuscend.com"; // para usar solo nombre
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(fakeEmail, password);
+        const uid = userCredential.user.uid;
+
+        await db.collection("usuarios").doc(uid).set({
+          username,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert("🎉 Cuenta creada correctamente");
+        window.location.href = "upload.html";
+      } catch (error) {
+        alert("❌ Error: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
